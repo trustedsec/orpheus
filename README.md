@@ -19,4 +19,4 @@ python3 orpheus.py
 Check out the video on [YouTube](https://www.youtube.com/watch?v=SwbSq1dTz7Y)
 
 # Blog Post
-Check out the blog post on [TrustedSec](https://trustedsec.com)
+Check out the blog post on [TrustedSec](https://www.trustedsec.com/blog/the-art-of-bypassing-kerberoast-detections-with-orpheus/)
