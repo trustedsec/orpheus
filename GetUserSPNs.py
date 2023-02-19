@@ -36,6 +36,8 @@ import sys
 import pkg_resources
 from datetime import datetime
 from binascii import hexlify, unhexlify
+from time import sleep
+from random import randint
 
 from pyasn1.codec.der import decoder
 from impacket import version
@@ -87,6 +89,16 @@ class GetUserSPNs:
         self.__requestUser = cmdLineOptions.request_user
         self.__options = cmdLineOptions.options
         self.__encryption = cmdLineOptions.encryption
+        try:
+            self.__sleep = int(cmdLineOptions.sleep)
+        except:
+            print("Invalid sleep integer value.")
+            self.__sleep = 0
+        try:
+            self.__jitter = int(cmdLineOptions.jitter)
+        except:
+            print("Invalid jitter integer value.")
+            self.__jitter = 0
         if cmdLineOptions.hashes is not None:
             self.__lmhash, self.__nthash = cmdLineOptions.hashes.split(':')
 
@@ -103,6 +115,14 @@ class GetUserSPNs:
         if user_domain != target_domain and self.__kdcHost:
             logging.warning('DC ip will be ignored because of cross-domain targeting.')
             self.__kdcHost = None
+    
+    def haveARest(self):
+        if self.__sleep > 0:
+            restFor = self.__sleep
+            if self.__jitter > 0:
+                restFor += randint(-self.__jitter, self.__jitter)
+            print("Waiting " + str(restFor) + " seconds until next TGS request.")
+            sleep(restFor)
 
     def getMachineName(self):
         if self.__kdcHost is not None and self.__targetDomain == self.__domain:
@@ -405,6 +425,7 @@ class GetUserSPNs:
                 print("")
 
                 for user, SPN in users.items():
+                    self.haveARest()
                     sAMAccountName = user
                     downLevelLogonName = self.__targetDomain + "\\" + sAMAccountName
 
@@ -446,6 +467,7 @@ class GetUserSPNs:
 
         for username in usernames:
             try:
+                self.haveARest()
                 principalName = Principal()
                 principalName.type = constants.PrincipalNameType.NT_ENTERPRISE.value
                 principalName.components = [username]
@@ -512,6 +534,8 @@ if __name__ == '__main__':
     orph = parser.add_argument_group('orpheus')
     orph.add_argument('-options', action="store", metavar="hex value", default="0x40810010", help='The hexadecimal value to send to the Kerberos Ticket Granting Service (TGS).')
     orph.add_argument('-encryption', action="store", metavar="18 or 23", default="23", help='Set encryption to AES256 (18) or RC4 (23).')
+    orph.add_argument('-sleep', action="store", metavar="0 to MAXINT", default="0", help='Sleep time between each TGS request')
+    orph.add_argument('-jitter', action="store", metavar="-MAXINT to MAXINT", default="0", help='Jitter to avoid waiting a constant sleep time between each TGS request')
 
     if len(sys.argv)==1:
         parser.print_help()
